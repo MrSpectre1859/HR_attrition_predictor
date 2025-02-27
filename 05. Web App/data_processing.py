@@ -1,4 +1,3 @@
-# data_preprocessing.py
 import pandas as pd
 
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -13,7 +12,7 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     # Copiamos o DF para não alterar o original
     df_prep = df.copy()
     
-    # 1) Mapeamento manual
+    # Mapeamento manual de algumas variáveis
     if 'BusinessTravel' in df_prep.columns:
         df_prep['BusinessTravel'] = df_prep['BusinessTravel'].map({'Travel_Frequently':2, 'Travel_Rarely':1, 'Non-Travel':0})
     if 'Gender' in df_prep.columns:
@@ -21,20 +20,20 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     if 'OverTime' in df_prep.columns:
         df_prep['OverTime'] = df_prep['OverTime'].map({'Yes':1, 'No':0})
 
-    # 2) One-Hot Encoding
+    # One-Hot Encoding
     columns_to_dummy = ['Department', 'EducationField', 'JobRole', 'MaritalStatus']
     for col in columns_to_dummy:
         if col in df_prep.columns:
             df_prep = pd.get_dummies(df_prep, columns=[col], drop_first=True, dtype='int64')
     
-    # 3) Excluir colunas não usadas
+    # Excluir colunas não usadas para treinar o modelo
     cols_to_delete = ['Over18', 'StandardHours', 'EmployeeNumber', 'EmployeeCount', 'Attrition']
     for c in cols_to_delete:
         if c in df_prep.columns:
             df_prep.drop(c, axis=1, inplace=True, errors='ignore')
 
     
-    # 4) Garantir que as colunas fiquem na MESMA ordem que no modelo
+    # Garantir que as colunas fiquem na MESMA ordem que no modelo
     with open("../03. Outputs/features_order.txt", "r") as file:
         expected_order = [line.strip() for line in file.readlines()]
 
