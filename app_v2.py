@@ -327,17 +327,45 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import joblib
-import numpy as np
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.ensemble import GradientBoostingClassifier
 
 @st.cache_resource
 def load_model():
-    return joblib.load("random_forest_model.pkl")
+    try:
+        return joblib.load("random_forest_model.pkl") 
+    except Exception as e:
+        st.error(f"Erro ao carregar o modelo: {e}")
+        return None
+
+@st.cache_data
+def load_data():
+    df = pd.read_csv("hr_dataset.csv")
+
+    # ===========================================
+    #           PROCESSAMENTO DE DADOS
+    # ===========================================
+    data_prep = df.copy()
+
+    # Transformações manuais - Simple Encoding
+    data_prep['BusinessTravel'] = data_prep['BusinessTravel'].map({'Travel_Frequently': 2, 'Travel_Rarely': 1, 'Non-Travel': 0})
+    data_prep['Gender'] = data_prep['Gender'].map({'Male': 1, 'Female': 0})
+    data_prep['OverTime'] = data_prep['OverTime'].map({'Yes': 1, 'No': 0})
+
+    # One-Hot Encoding
+    columns_to_dummy = ['Department', 'EducationField', 'JobRole', 'MaritalStatus']
+    data_prep = pd.get_dummies(data_prep, columns=columns_to_dummy, drop_first=True, dtype='int64')
+
+    # Criando variável target binária: Attrition_numerical
+    data_prep['Attrition_numerical'] = data_prep['Attrition'].map({'Yes': 1, 'No': 0})
+
+    # Removendo colunas desnecessárias
+    cols_to_delete = ['Over18', 'StandardHours', 'EmployeeNumber', 'EmployeeCount', 'Attrition']
+    data_prep.drop(cols_to_delete, axis=1, inplace=True)
+
+    return df, data_prep
 
 model = load_model()
+df_original, df_prep = load_data()
 
-# Função do score
 def classify_risk(probs, low_threshold=0.10, medium_threshold=0.40):
     if probs < low_threshold:
         return "Baixo"
@@ -348,13 +376,6 @@ def classify_risk(probs, low_threshold=0.10, medium_threshold=0.40):
 
 def page_analytics():
     st.title("📊 Analytics - Previsão de Saída de Funcionários")
-
-    # Verificar se há funcionários cadastrados
-    if st.session_state.funcionarios.empty:
-        st.warning("⚠️ Nenhum funcionário cadastrado ainda. Adicione novos funcionários na aba Cadastro!")
-        if st.button("🏠 Voltar para Home", use_container_width=True):
-            st.session_state.page = "Home"
-        return
     
     # Filtros interativos
     st.subheader("🔍 Filtros")
@@ -362,64 +383,76 @@ def page_analytics():
     
     with col1:
         filtro_departamento = st.selectbox(
-            "Filtrar por Departamento",
-            ["Todos"] + list(st.session_state.funcionarios["Department"].unique())
+            "Departamento",
+            ["Todos"] + list(df_original["Department"].unique())
         )
     
     with col2:
         filtro_cargo = st.selectbox(
-            "Filtrar por Cargo",
-            ["Todos"] + list(st.session_state.funcionarios["JobRole"].unique())
+            "Cargo",
+            ["Todos"] + list(df_original["JobRole"].unique())
         )
     
-    df_filtrado = st.session_state.funcionarios.copy()
+    # Aplicando filtros
+    df_filtrado = df_original.copy()
     
     if filtro_departamento != "Todos":
         df_filtrado = df_filtrado[df_filtrado["Department"] == filtro_departamento]
     if filtro_cargo != "Todos":
         df_filtrado = df_filtrado[df_filtrado["JobRole"] == filtro_cargo]
     
-    # Previsão de risco
-    X = df_filtrado.drop(columns=["EmployeeNumber", "Over18", "JobRole", "Department", "EducationField", "MaritalStatus", "BusinessTravel", "Gender", "OverTime"], errors='ignore')
-    X = X.fillna(0)  # Lidando com valores nulos
-    
-    df_filtrado["Risk_Score"] = model.predict_proba(X)[:, 1]
+    df_filtrado_prep = df_prep.loc[df_filtrado.index].copy()
+
+    # Fazer previsões no conjunto filtrado
+    df_filtrado["Risk_Score"] = model.predict_proba(df_filtrado_prep)[:, 1]
     df_filtrado["Risk_Level"] = df_filtrado["Risk_Score"].apply(lambda x: classify_risk(x))
-    
+
     # KPIs
-    st.subheader("📌 KPI Cards")
+    st.subheader("📌 KPIs")
     col_kpi1, col_kpi2, col_kpi3 = st.columns(3)
     
     with col_kpi1:
-        st.metric("Funcionários com Baixo Risco", (df_filtrado["Risk_Level"] == "Baixo").sum())
+        st.metric("Baixo Risco", (df_filtrado["Risk_Level"] == "Baixo").sum())
     with col_kpi2:
-        st.metric("Funcionários com Risco Moderado", (df_filtrado["Risk_Level"] == "Moderado").sum())
+        st.metric("Risco Moderado", (df_filtrado["Risk_Level"] == "Moderado").sum())
     with col_kpi3:
-        st.metric("Funcionários com Alto Risco", (df_filtrado["Risk_Level"] == "Alto").sum())
+        st.metric("Alto Risco", (df_filtrado["Risk_Level"] == "Alto").sum())
     
     # Gráficos
     st.subheader("📊 Distribuição de Risco")
+    df_filtrado["Risk_Level"] = pd.Categorical(df_filtrado["Risk_Level"], categories=["Baixo", "Moderado", "Alto"], ordered=True)
+    
     fig_risco = px.histogram(df_filtrado, x="Risk_Level", color="Risk_Level", title="Distribuição de Risco")
     st.plotly_chart(fig_risco, use_container_width=True)
     
+    fig_pie = px.pie(df_filtrado, names="Risk_Level", title="Proporção de Risco")
+    st.plotly_chart(fig_pie, use_container_width=True)
+    
     # Exibir tabela de risco
     st.subheader("📋 Funcionários e Classificação de Risco")
-    st.dataframe(df_filtrado[["EmployeeNumber", "Risk_Score", "Risk_Level"]], use_container_width=True)
+    st.dataframe(df_filtrado[["Risk_Score", "Risk_Level"]], use_container_width=True)
     
     # Seleção de funcionário para análise individual
     st.subheader("🔍 Análise Individual")
-    funcionario_id = st.selectbox("Selecione um funcionário para análise", df_filtrado["EmployeeNumber"].tolist())
-    func_detalhes = df_filtrado[df_filtrado["EmployeeNumber"] == funcionario_id].iloc[0]
+    if not df_filtrado.empty:
+        funcionario_id = st.selectbox("Selecione um funcionário para análise", df_filtrado.index.tolist())
+        func_detalhes = df_filtrado.loc[funcionario_id]
+
+        st.write(f"**Funcionário:** {funcionario_id}")
+        st.write(f"**Score de Risco:** {func_detalhes['Risk_Score']:.2f}")
+        st.write(f"**Nível de Risco:** {func_detalhes['Risk_Level']}")
+    else:
+        st.warning("Nenhum funcionário encontrado com os filtros selecionados.")
     
-    st.write(f"**Funcionário:** {funcionario_id}")
-    st.write(f"**Score de Risco:** {func_detalhes['Risk_Score']:.2f}")
-    st.write(f"**Nível de Risco:** {func_detalhes['Risk_Level']}")
-    
+    # Adicionando um gráfico para visualizar a distribuição salarial por nível de risco
+    st.subheader("💰 Salário por Nível de Risco")
+    fig_box = px.box(df_filtrado, x="Risk_Level", y="MonthlyIncome", color="Risk_Level", title="Distribuição Salarial por Nível de Risco")
+    st.plotly_chart(fig_box, use_container_width=True)
+
     # Botão para voltar à Home
     st.divider()
     if st.button("🏠 Voltar para Home", use_container_width=True):
         st.session_state.page = "Home"
-
 
 # -------------------------------------------------------------
 # FUNÇÃO PRINCIPAL DE ROTEAMENTO
