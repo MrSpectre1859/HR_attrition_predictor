@@ -127,7 +127,7 @@ def page_sobre():
     st.subheader("👤 Sobre Mim")
     
 
-    st.image("extras/eu.jpeg", width=150, caption="Eu")
+    st.image("eu.jpeg", width=150, caption="Eu")
     
     st.write(
             "👋 Olá! Meu nome é Alisson Machado Cesário e sou um profissional de Recursos Humanos e Ciência de Dados.\n"
