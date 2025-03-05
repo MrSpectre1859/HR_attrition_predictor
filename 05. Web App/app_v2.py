@@ -320,8 +320,6 @@ def page_catalogo():
             st.success(f"Funcionário {funcionario_excluir} removido com sucesso!")
             st.rerun(scope="app")
 
-
-
 # -------------------------------------------------------------
 # PÁGINA: ANALYTICS
 # -------------------------------------------------------------
@@ -334,7 +332,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import GradientBoostingClassifier
 
 # Carregando o modelo
-MODEL_PATH = "../04. ML Model/random_forest_model.pkl"
+MODEL_PATH = "random_forest_model.pkl"
 model = joblib.load(MODEL_PATH)
 
 # Função do score
