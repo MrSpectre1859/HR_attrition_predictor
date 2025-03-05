@@ -331,9 +331,11 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import GradientBoostingClassifier
 
-# Carregando o modelo
-MODEL_PATH = "random_forest_model.pkl"
-model = joblib.load(MODEL_PATH)
+@st.cache_resource
+def load_model():
+    return joblib.load("random_forest_model.pkl")
+
+model = load_model()
 
 # Função do score
 def classify_risk(probs, low_threshold=0.10, medium_threshold=0.40):
