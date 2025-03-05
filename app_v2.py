@@ -401,7 +401,7 @@ def page_analytics():
     if filtro_cargo != "Todos":
         df_filtrado = df_filtrado[df_filtrado["JobRole"] == filtro_cargo]
     
-    df_filtrado_prep = df_prep.loc[df_filtrado.index].copy()
+    df_filtrado_prep = df_prep.loc[df_filtrado.index].drop(columns=["Attrition_numerical"], errors="ignore")
 
     # Fazer previsões no conjunto filtrado
     df_filtrado["Risk_Score"] = model.predict_proba(df_filtrado_prep)[:, 1]
