@@ -1,6 +1,12 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import random
+import joblib
+import shap
+import matplotlib.pyplot as plt
+from openai import OpenAI
+from openai import APIError, APIConnectionError, RateLimitError
 
 # Definição de categorias reais do dataset
 BUSINESS_TRAVEL = ["Travel_Rarely", "Travel_Frequently", "Non-Travel"]
@@ -38,7 +44,7 @@ def page_home():
     st.title("Bem-vindo ao People Analytics")
     st.markdown("<p style='text-align: center;'>Selecione uma opção abaixo para navegar:</p>", unsafe_allow_html=True)
 
-    col1, col2, col3, col4 = st.columns([1, 1, 1, 1], gap="large")
+    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1], gap="large")
 
     # Sobre
     with col1:
@@ -59,7 +65,7 @@ def page_home():
             st.markdown(
                 "<div style='background-color: #67B9B0; padding: 20px; border-radius: 10px; text-align: center;'>"
                 "<h3 style='color: white;'>Cadastro</h3>"
-                "<p style='color: white;'>Cadastre novos funcionários na base de dados.</p>"
+                "<p style='color: white;'>Cadastre novos funcionários na base de dados</p>"
                 "</div>",
                 unsafe_allow_html=True
             )
@@ -71,7 +77,7 @@ def page_home():
             st.markdown(
                 "<div style='background-color: #E5531A; padding : 20px; border-radius: 10px; text-align: center;'>"
                 "<h3 style='color: white;'> Catálogo</h3>"
-                "<p style='color: wite;'> Veja a lista completa de funcionários da sua empresa.</p>"
+                "<p style='color: wite;'> Veja a lista completa de funcionários da sua empresa</p>"
                 "</div>",
                 unsafe_allow_html=True
             )
@@ -84,12 +90,25 @@ def page_home():
             st.markdown(
                 "<div style='background-color: #CE1431; padding: 20px; border-radius: 10px; text-align: center;'>"
                 "<h3 style='color: white;'>Analytics</h3>"
-                "<p style='color: white;'>Visualize análises avançadas, predições e explicações do modelo.</p>"
+                "<p style='color: white;'>Visualize análises avançadas, predições e explicações do modelo</p>"
                 "</div>",
                 unsafe_allow_html=True
             )
             if st.button("Ir para Analytics", key="btn_analytics"):
                 st.session_state.page = "Analytics"
+    
+    # Chat com IA
+    with col5:
+        with st.container():
+            st.markdown(
+                "<div style='background-color: #1A73E8; padding: 20px; border-radius: 10px; text-align: center;'>"
+                "<h3 style='color: white;'>Chat com IA</h3>"
+                "<p style='color: white;'>Converse com a IA sobre seus funcionários e previsões</p>"
+                "</div>",
+                unsafe_allow_html=True
+            )
+            if st.button("Ir para Chat", key="btn_chat"):
+                st.session_state.page = "Chat"
 
 
 # -------------------------------------------------------------
@@ -319,6 +338,11 @@ def page_catalogo():
             st.session_state.funcionarios = st.session_state.funcionarios[st.session_state.funcionarios["EmployeeNumber"] != funcionario_excluir]
             st.success(f"Funcionário {funcionario_excluir} removido com sucesso!")
             st.rerun(scope="app")
+    
+    # Botão para voltar à Home
+    st.divider()
+    if st.button("🏠 Voltar para Home", use_container_width=False):
+        st.session_state.page = "Home"
 
 # -------------------------------------------------------------
 # PÁGINA: ANALYTICS
@@ -366,6 +390,18 @@ def load_data():
 model = load_model()
 df_original, df_prep = load_data()
 
+@st.cache_resource
+def get_explainer():
+    return shap.Explainer(model, df_prep)
+
+@st.cache_data
+def compute_shap_values():
+    explainer = get_explainer()
+    shap_values_all = explainer(df_prep)
+    return shap_values_all[..., 1]
+
+shap_values_class1 = compute_shap_values()
+
 def classify_risk(probs, low_threshold=0.10, medium_threshold=0.40):
     if probs < low_threshold:
         return "Baixo"
@@ -373,6 +409,18 @@ def classify_risk(probs, low_threshold=0.10, medium_threshold=0.40):
         return "Moderado"
     else:
         return "Alto"
+
+def shap_func_id(funcionario_idx):
+    "Gera a explicação SHAP para um funcionário específico"
+    # Obtém os valores SHAP para o conjunto de dados
+    shap_values = shap_values_class1[funcionario_idx]  # Índice do funcionário
+    shap_importances = np.abs(shap_values.values).flatten()
+    
+    # Pega os 3 principais fatores que mais influenciam a saída
+    top_indices = np.argsort(shap_importances)[-3:]  # Top 3 fatores
+    top_features = df_prep.columns[top_indices]
+
+    return top_features.tolist()
 
 def page_analytics():
     st.title("📊 Analytics - Previsão de Saída de Funcionários")
@@ -432,6 +480,11 @@ def page_analytics():
     st.subheader("📋 Funcionários e Classificação de Risco")
     st.dataframe(df_filtrado[["Risk_Score", "Risk_Level"]], use_container_width=True)
     
+    # Adicionando um gráfico para visualizar a distribuição salarial por nível de risco
+    st.subheader("💰 Salário por Nível de Risco")
+    fig_box = px.box(df_filtrado, x="Risk_Level", y="MonthlyIncome", color="Risk_Level", title="Distribuição Salarial por Nível de Risco")
+    st.plotly_chart(fig_box, use_container_width=True)
+
     # Seleção de funcionário para análise individual
     st.subheader("🔍 Análise Individual")
     if not df_filtrado.empty:
@@ -444,14 +497,111 @@ def page_analytics():
     else:
         st.warning("Nenhum funcionário encontrado com os filtros selecionados.")
     
-    # Adicionando um gráfico para visualizar a distribuição salarial por nível de risco
-    st.subheader("💰 Salário por Nível de Risco")
-    fig_box = px.box(df_filtrado, x="Risk_Level", y="MonthlyIncome", color="Risk_Level", title="Distribuição Salarial por Nível de Risco")
-    st.plotly_chart(fig_box, use_container_width=True)
+        # Explicação SHAP
+    st.subheader("📌 Explicação SHAP")
+
+    # Exibir Waterfall apenas para um funcionário selecionado
+    st.subheader("📊 Waterfall SHAP para o Funcionário")
+    valores_um_func = shap_values_class1[funcionario_id]
+    fig1, ax1 = plt.subplots()
+    shap.waterfall_plot(valores_um_func)
+    st.pyplot(fig1)
+
+    # Bar Plot Global
+    st.subheader("📊 Bar Plot Global (Classe 1)")
+    fig2, ax2 = plt.subplots()
+    shap.summary_plot(shap_values_class1, df_prep, plot_type="bar", show=False)
+    st.pyplot(fig2)
+
+    # Beeswarm Plot Global
+    st.subheader("📊 Beeswarm Plot Global (Classe 1)")
+    fig3, ax3 = plt.subplots()
+    shap.summary_plot(shap_values_class1, df_prep, show=False)
+    st.pyplot(fig3)
 
     # Botão para voltar à Home
     st.divider()
-    if st.button("🏠 Voltar para Home", use_container_width=True):
+    if st.button("🏠 Voltar para Home", use_container_width=False):
+        st.session_state.page = "Home"
+
+# -------------------------------------------------------------
+# PÁGINA : CHAT COM IA
+# -------------------------------------------------------------
+
+# Inicialize o cliente com sua chave de API
+client = OpenAI(api_key="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")
+
+# 📌 Inicializar histórico de conversa na sessão
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = [{"role": "system", "content": "Como posso te ajudar hoje?"}]
+
+def page_chat():
+    st.title("💬 Chat com IA - People Analytics")
+
+    # Seleção do funcionário
+    funcionario_idx = st.selectbox("Selecione um funcionário", list(range(len(df_original))))
+
+    funcionario_info = df_original.iloc[funcionario_idx].to_dict()
+
+    # Obtém a previsão do modelo para esse funcionário
+    funcionario_prep = df_prep.iloc[funcionario_idx:funcionario_idx+1].drop(columns="Attrition_numerical")
+    risk_score = model.predict_proba(funcionario_prep)[:, 1][0]  # Probabilidade de saída
+    risk_level = classify_risk(risk_score)  # Classificação de risco (baixo, moderado, alto)
+
+    # Obtém os fatores SHAP mais relevantes
+    fatores_importantes = shap_func_id(funcionario_idx)
+
+    resultados_modelo = (
+        f"- Probabilidade de saída: {risk_score:.2%}\n"
+        f"- Classificação de risco: {risk_level}\n\n"
+        f"Principais fatores que influenciam essa previsão:\n"
+        f"1) {fatores_importantes[0]}\n"
+        f"2) {fatores_importantes[1]}\n"
+        f"3) {fatores_importantes[2]}\n"
+    )
+
+    user_message = st.text_area("Digite sua pergunta:")
+
+    if st.button("Enviar"):
+        if user_message.strip():
+            # Criando o prompt inicial com dados do funcionário
+            mensagem_inicial = f"Os dados do funcionário são:\n{funcionario_info}\n\nSeguem os dados da previsão do modelo e explicação SHAP:\n{resultados_modelo}\nPergunta do usuário: {user_message}"
+
+            # Adiciona ao histórico de conversa
+            st.session_state.chat_history.append({"role": "user", "content": mensagem_inicial})
+
+            try:
+                resposta = client.chat.completions.create(
+                    model="gpt-4-turbo",
+                    messages=st.session_state.chat_history,
+                    temperature=1,
+                    max_tokens=2048,
+                    top_p=1
+                )
+
+                resposta_texto = resposta.choices[0].message.content
+                st.session_state.chat_history.append({"role": "assistant", "content": resposta_texto})
+
+            except APIError as e:
+                st.error(f"Erro da API OpenAI: {e}")
+            except APIConnectionError as e:
+                st.error(f"Erro de conexão com a OpenAI: {e}")
+            except RateLimitError as e:
+                st.error(f"Limite de requisições excedido: {e}")
+
+    # Exibir o histórico da conversa
+    for mensagem in st.session_state.chat_history:
+        with st.chat_message(mensagem["role"]):
+            st.write(mensagem["content"])
+
+    # Botão para resetar a conversa
+    if st.button("Resetar Chat"):
+        st.session_state.chat_history = [{"role": "system", "content": "Como posso te ajudar hoje?"}]
+        st.rerun()
+    
+    # Botão para voltar à Home
+    st.divider()
+    if st.button("🏠 Voltar para Home", use_container_width=False):
         st.session_state.page = "Home"
 
 # -------------------------------------------------------------
@@ -473,6 +623,8 @@ def main():
         page_catalogo()
     elif st.session_state.page == "Analytics":
         page_analytics()
+    elif st.session_state.page == "Chat":
+        page_chat()
     else:
         st.session_state.page = "Home"
         st.error("Página não encontrada. Voltando para a Home.")
