@@ -42,7 +42,6 @@ st.set_page_config(
 # -------------------------------------------------------------
 def page_home():
     st.title("Bem-vindo ao People Analytics")
-    st.markdown("<p style='text-align: center;'>Selecione uma opção abaixo para navegar:</p>", unsafe_allow_html=True)
 
     col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1], gap="large")
 
@@ -117,15 +116,41 @@ def page_home():
 def page_sobre():
     st.title("Sobre o Projeto")
 
-    # Descrição do projeto
-    st.subheader("📌 O que é este projeto?")
+    # Visão Geral
+    st.subheader("📌 Visão Geral")
     st.write(
-        "Este projeto foi criado para demonstrar como **People Analytics** pode ser utilizado "
-        "para prever a saída de funcionários, identificar padrões de comportamento e apoiar decisões estratégicas "
-        "baseadas em dados dentro do setor de Recursos Humanos."
+        "O **People Analytics - Predição de Saída de Funcionários** foi desenvolvido com o intuito de simular uma ferramenta "
+        "interativa e inteligente de análise preditiva de turnover. Além disso, ela foi construída com o intuito de fomentar o uso de metodologias e "
+        "ferramentas tecnológicas no RH, visando uma tomada de decisão baseada em dados e menos 'feeling'.\n\n"
+        "Você poderá explorar o catálogo de funcionários e cadastrar novos, realizar previsões sobre o risco de saída e "
+        "interpretar os resultados. Além disso, é possível interagir com um **Chatbot** que utiliza o modelo **GPT-4-Turbo** "
+        "para conversar sobre os funcionários e seus contextos."
     )
 
-    # Explicação sobre o dataset
+    # Tecnologias Utilizadas
+    st.subheader("🚀 Tecnologias Utilizadas")
+    st.write(
+        "- **Python** 🐍\n"
+        "- **Streamlit** (Interface Web)\n"
+        "- **Pandas** (Manipulação de dados)\n"
+        "- **Scikit-learn** (Treinamento do modelo)\n"
+        "- **SHAP** (Explicabilidade do modelo)\n"
+        "- **OpenAI API** (Chatbot com GPT-4-Turbo)\n"
+        "- **Plotly & Matplotlib** (Gráficos)\n"
+        "- **AWS EC2** (Hospedagem do aplicativo)"
+    )
+
+    # Objetivos Principais
+    st.subheader("🎯 Objetivos Principais")
+    st.write(
+        "- Desenvolver um **modelo preditivo** capaz de identificar a probabilidade de saída de um funcionário (turnover) utilizando **Machine Learning**;\n"
+        "- Criar um **dashboard** com visualizações detalhadas sobre alguns indicadores utilizados comumente pelo RH e pela gestão;\n"
+        "- **Explicar as previsões** do modelo com o uso de **SHAP** para auxiliar a compreensão do RH;\n"
+        "- Implementar um **chatbot inteligente** com o modelo GPT-4, permitindo interações personalizadas;\n"
+        "- Fomentar o desenvolvimento de RH baseado em dados e mais tech."
+    )
+
+    # Sobre o Dataset
     st.subheader("📊 Sobre o Dataset")
     st.write(
         "Os dados utilizados são do **IBM HR Analytics Employee Attrition & Performance**, disponível no Kaggle. "
@@ -133,31 +158,38 @@ def page_sobre():
         "salário, envolvimento no trabalho e se o funcionário saiu da empresa (variável target: *Attrition*)."
     )
 
-    # Desafios do uso de ML em RH
+    # Desafios do uso de Machine Learning em RH
     st.subheader("⚠️ Desafios do Uso de Machine Learning em RH")
     st.write(
         "- **Dados Sensíveis**: Privacidade e ética são fundamentais ao analisar dados de funcionários.\n"
         "- **Viés Algorítmico**: Modelos podem amplificar desigualdades existentes se não forem bem treinados.\n"
-        "- **Interpretação das Predições**: Decisões não devem ser tomadas apenas com base no modelo, mas sim como "
-        "um apoio à gestão."
+        "- **Interpretação das Predições**: Decisões não devem ser tomadas apenas com base no modelo, mas sim como um apoio à gestão."
     )
 
-    # Sobre Mim (Espaço para adicionar sua foto e perfil)
+    # Sobre Mim (Foto e Contatos)
     st.subheader("👤 Sobre Mim")
-    
-
     st.image("eu.jpeg", width=150, caption="Eu")
-    
+
     st.write(
-            "👋 Olá! Meu nome é Alisson Machado Cesário e sou um profissional de Recursos Humanos e Ciência de Dados.\n"
-            "Atuo na interseção entre tecnologia e gestão de pessoas, utilizando dados para gerar insights estratégicos.\n\n"
-            "📍 **LinkedIn:** [alissonmcesario](www.linkedin.com/in/alissonmcesario)\n\n"
-            "📍 **GitHub:** [MrSpectre1859](https://github.com/MrSpectre1859)"
-        )
+        "👋 Olá! Meu nome é **Alison Machado Cesário**, sou Bacharel em Psicologia pela Universidade Federal Fluminense (UFF) e pós-graduando no MBA de Data Science e Analytics pela USP/ESALQ. "
+        "Sou completamente apaixonado por tecnologia, inovação, dados e estou constantemente buscando algo novo para poder aprender. Comecei na programação em 2018 estudando Python 3 através as aulas do Prof. Guanabara no Curso em Vídeo e"
+        " desde então não consegui parar.\n\n"
+        "Minhas competências:\n\n"
+        "1. Python\n"
+        "2. SQL\n"
+        "3. Power BI\n"
+        "4. Data Storytelling\n"
+        "5. ETL\n"
+        "6. Machine Learning\n"
+        "7. Conexão API\n\n"
+        "📍 **e-mail**: [alissonmcesario@gmail.com](mailto:alissonmcesario@gmail.com)"
+        "📍 **LinkedIn**: [alissonmcesario](https://www.linkedin.com/in/alissonmcesario)\n"
+        "📍 **GitHub**: [MrSpectre1859](https://github.com/MrSpectre1859)"
+    )
 
     # Botão para voltar à Home
     st.divider()
-    if st.button("🏠 Voltar para Home", use_container_width=True):
+    if st.button("🏠 Voltar para Home", use_container_width=False):
         st.session_state.page = "Home"
 
 
@@ -245,7 +277,7 @@ def page_cadastro():
                 random.randint(3000, 20000), random.randint(5000, 30000), random.randint(0, 10),  
                 random.choice(["Yes", "No"]), random.randint(0, 50), 3, random.randint(1, 4), random.randint(0, 3),  
                 random.randint(1, 40),  
-                random.randint(1, 40),  # 🔥 Adicionado: TotalWorkingYears  
+                random.randint(1, 40),
                 random.randint(0, 10), random.randint(1, 4), random.randint(1, 40),  
                 random.randint(1, 20), random.randint(0, 10), random.randint(1, 20)  
             ]], columns=st.session_state.funcionarios.columns)
@@ -257,7 +289,7 @@ def page_cadastro():
 
     # Botão para voltar à Home
     st.divider()
-    if st.button("🏠 Voltar para Home", use_container_width=True):
+    if st.button("🏠 Voltar para Home", use_container_width=False):
         st.session_state.page = "Home"
 
 # -------------------------------------------------------------
@@ -334,7 +366,7 @@ def page_catalogo():
         st.subheader("🗑️ Remover Funcionário")
         funcionario_excluir = st.selectbox("Selecione um funcionário para excluir", df_filtrado["EmployeeNumber"].tolist())
 
-        if st.button("❌ Excluir", use_container_width=True):
+        if st.button("❌ Excluir", use_container_width=False):
             st.session_state.funcionarios = st.session_state.funcionarios[st.session_state.funcionarios["EmployeeNumber"] != funcionario_excluir]
             st.success(f"Funcionário {funcionario_excluir} removido com sucesso!")
             st.rerun(scope="app")
@@ -396,8 +428,10 @@ def get_explainer():
 
 @st.cache_data
 def compute_shap_values():
-    explainer = get_explainer()
-    shap_values_all = explainer(df_prep)
+    with st.status("⏳ Estamos preparando o sistema para você.\n\n Isso costuma levar 1 minuto!", expanded=True) as status:
+        explainer = get_explainer()
+        shap_values_all = explainer(df_prep)
+        status.update(label="✅ Sistema carregado com sucesso. Você já pode explorar os dados!", state="complete")
     return shap_values_all[..., 1]
 
 shap_values_class1 = compute_shap_values()
