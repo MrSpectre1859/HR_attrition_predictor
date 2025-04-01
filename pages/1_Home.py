@@ -57,7 +57,7 @@ def page_home():
     
     st.subheader("👤 Sobre Mim")
 
-    col1, col2 = st.columns([0.4, 0.55], vertical_alignment="center")
+    col1, col2 = st.columns([0.4, 0.55], vertical_alignment="center", gap="large")
 
     with col1:
         st.image("Alisson.jpeg", width=450, caption="Alisson Machado Cesário", use_container_width=False)

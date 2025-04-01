@@ -8,9 +8,16 @@ from utils import *
 model = load_model()
 df_original, df_prep = load_data()
 explainer = get_explainer(model, df_prep)
-shap_values_class1 = compute_shap_values(explainer, df_prep)
 
 def page_analytics():
+    if "shap_values_class1" not in st.session_state:
+        with st.status("⏳ Carregando SHAP...\n\nIsso costuma levar no máximo 1 minuto.", expanded=True) as status:
+            shap_values_class1 = compute_shap_values(explainer, df_prep)
+            st.session_state.shap_values_class1 = shap_values_class1
+            status.update(label="✅ SHAP carregado com sucesso.", state="complete")
+    else:
+        shap_values_class1 = st.session_state.shap_values_class1
+    
     st.subheader("🧹 Filtros")
     col1, col2 = st.columns(2)
 

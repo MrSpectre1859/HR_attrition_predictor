@@ -36,10 +36,7 @@ def get_explainer(_model, df_prep):
 
 @st.cache_data
 def compute_shap_values(_explainer, df_prep):
-    with st.status("⏳ Carregando SHAP...\n\nIsso costuma levar no máximo 1 minuto!", expanded=True) as status:
-        shap_values_all = _explainer(df_prep)
-        status.update(label="✅ SHAP carregado com sucesso.", state="complete")
-    return shap_values_all[..., 1]
+    return _explainer(df_prep)[..., 1]
 
 def classify_risk(probs, low_threshold=0.10, medium_threshold=0.40):
     if probs < low_threshold:
