@@ -1,0 +1,24 @@
+[[pages]]
+path = "pages/1_Home.py"
+name = "Home"
+icon = "🏠"
+
+[[pages]]
+path = "pages/2_Cadastro.py"
+name = "Cadastro"
+icon = "📝"
+
+[[pages]]
+path = "pages/3_Catálogo.py"
+name = "Catálogo"
+icon = "📂"
+
+[[pages]]
+path = "pages/4_Analytics.py"
+name = "Analytics"
+icon = "📈"
+
+[[pages]]
+path = "pages/5_Chat.py"
+name = "Chatbot - IA"
+icon = "🤖"
