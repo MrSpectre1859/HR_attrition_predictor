@@ -56,26 +56,28 @@ def page_home():
             )
     
     st.subheader("👤 Sobre Mim")
+    
+    with st.container():
+    
+        col1, col2 = st.columns([1, 2], vertical_alignment="center", gap="large")
 
-    col1, col2 = st.columns([0.4, 0.55], vertical_alignment="center", gap="large")
+        with col1:
+            st.image("Alisson.jpeg", caption="Alisson Machado Cesário", use_container_width=True)
 
-    with col1:
-        st.image("Alisson.jpeg", width=450, caption="Alisson Machado Cesário", use_container_width=False)
-
-    with col2:
-        st.write(
-            "👋 Olá! Meu nome é **Alison Machado Cesário**, sou Bacharel em Psicologia pela Universidade Federal Fluminense (UFF) e pós-graduando no MBA de Data Science e Analytics pela USP/ESALQ. "
-            "Sou completamente apaixonado por tecnologia, inovação, dados e estou constantemente buscando algo novo para poder aprender.\n\n"
-            "Meu foco está em **transformar decisões baseadas em feeling em escolhas orientadas por dados** — principalmente em áreas que trabalham com dados do comportamento humano. "
-            "Para isso, estou habituado a usar:\n\n"
-            "1. Python para análise de dados\n"
-            "2. SQL em Bancos de Dados relacionais\n"
-            "3. Power BI para dashboard e KPI's\n"
-            "4. Data Storytelling para entregar valor ao cliente\n"
-            "5. Muito mais...\n\n"
-            "📨 **e-mail**: [alissonmcesario@gmail.com](mailto:alissonmcesario@gmail.com)\n\n"
-            "ℹ️ **LinkedIn**: [alissonmcesario](https://www.linkedin.com/in/alissonmcesario)\n\n"
-            "👨🏼‍💻 **GitHub**: [MrSpectre1859](https://github.com/MrSpectre1859)",
-        )
+        with col2:
+            st.write(
+                "👋 Olá! Meu nome é **Alison Machado Cesário**, sou Bacharel em Psicologia pela Universidade Federal Fluminense (UFF) e pós-graduando no MBA de Data Science e Analytics pela USP/ESALQ. "
+                "Sou completamente apaixonado por tecnologia, inovação, dados e estou constantemente buscando algo novo para poder aprender.\n\n"
+                "Meu foco está em **transformar decisões baseadas em feeling em escolhas orientadas por dados** — principalmente em áreas que trabalham com dados do comportamento humano. "
+                "Para isso, estou habituado a usar:\n\n"
+                "1. Python para análise de dados\n"
+                "2. SQL em Bancos de Dados relacionais\n"
+                "3. Power BI para dashboard e KPI's\n"
+                "4. Data Storytelling para entregar valor ao cliente\n"
+                "5. Muito mais...\n\n"
+                "📨 **e-mail**: [alissonmcesario@gmail.com](mailto:alissonmcesario@gmail.com)\n\n"
+                "ℹ️ **LinkedIn**: [alissonmcesario](https://www.linkedin.com/in/alissonmcesario)\n\n"
+                "👨🏼‍💻 **GitHub**: [MrSpectre1859](https://github.com/MrSpectre1859)",
+            )
 
 page_home()
